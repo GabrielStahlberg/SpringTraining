@@ -5,8 +5,9 @@ import br.com.gstahlberg.spring_training.model.enumeration.EnumCategory;
 import br.com.gstahlberg.spring_training.model.form.UpdateProductForm;
 import br.com.gstahlberg.spring_training.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -27,8 +28,10 @@ public class ProductController {
     private ProductService service;
 
     @GetMapping
+    @Cacheable(value = "allProducts")
     public ResponseEntity<Page<Product>> allProducts(@RequestParam(required = false) EnumCategory category,
                                                      @PageableDefault(sort = "id", direction = Sort.Direction.ASC, page = 0, size = 5) Pageable pagination) {
+
 
         if(category != null) {
             return ResponseEntity.ok().body(service.findProductByCategory(pagination, category));
@@ -38,6 +41,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @Cacheable(value = "productById")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         Optional<Product> productById = service.findProductById(id);
         if(productById.isPresent()) {
@@ -48,6 +52,7 @@ public class ProductController {
 
     @PostMapping
     @Transactional
+    @CacheEvict(value = {"allProducts", "productById"}, allEntries = true)
     public ResponseEntity<Product> saveProduct(@RequestBody @Valid Product product, UriComponentsBuilder uriBuilder) {
         service.saveProduct(product);
         URI uri = uriBuilder.path("/products/{id}").buildAndExpand(product.getId()).toUri();
@@ -56,7 +61,8 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody @Valid UpdateProductForm product) {
+    @CacheEvict(value = {"allProducts", "productById"}, allEntries = true)
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody UpdateProductForm product) {
 
         Optional<Product> produtoToUpdateEntity = service.findProductById(id);
         if(produtoToUpdateEntity.isPresent()) {

@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Data
@@ -26,10 +27,10 @@ public class Product implements Serializable {
     @NotBlank
     private String brand;
 
-    @NotBlank
+    @NotNull
     private Double price;
 
-    @NotBlank
+    @NotNull
     @Enumerated(EnumType.STRING)
     private EnumCategory category;
 }
