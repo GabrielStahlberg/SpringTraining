@@ -1,9 +1,13 @@
 package br.com.gstahlberg.spring_training.controller;
 
 import br.com.gstahlberg.spring_training.model.Product;
+import br.com.gstahlberg.spring_training.model.enumeration.EnumCategory;
 import br.com.gstahlberg.spring_training.model.form.UpdateProductForm;
 import br.com.gstahlberg.spring_training.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -11,7 +15,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -22,8 +25,17 @@ public class ProductController {
     private ProductService service;
 
     @GetMapping
-    public ResponseEntity<List<Product>> allProducts() {
-        return ResponseEntity.ok().body(service.findAll());
+    public ResponseEntity<Page<Product>> allProducts(@RequestParam(required = false) EnumCategory category,
+                                                     @RequestParam int page,
+                                                     @RequestParam int quantityPerPage) {
+
+        Pageable pagination = PageRequest.of(page, quantityPerPage);
+
+        if(category != null) {
+            return ResponseEntity.ok().body(service.findProductByCategory(pagination, category));
+        }
+
+        return ResponseEntity.ok().body(service.findAll(pagination));
     }
 
     @GetMapping("/{id}")
